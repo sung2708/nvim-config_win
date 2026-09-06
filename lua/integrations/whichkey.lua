@@ -224,7 +224,6 @@ if wk then
         { "<leader>Ta", desc = "Add Missing Imports", icon = { icon = "󰐕", color = "green" } },
         { "<leader>Tf", desc = "Fix All", icon = { icon = "󰁨", color = "yellow" } },
         { "<leader>Ti", desc = "Organize Imports", icon = { icon = "󰅩", color = "blue" } },
-        { "<leader>Tr", desc = "Rename File", icon = { icon = "󰑕", color = "purple" } },
         { "<leader>Tu", desc = "Remove Unused", icon = { icon = "󰆴", color = "red" } },
 
         { "<leader>r", group = "Refactor", icon = { icon = "󰑕", color = "purple" } },

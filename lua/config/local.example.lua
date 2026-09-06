@@ -10,3 +10,7 @@ vim.g.sungp_animations = false
 -- vim.g.sungp_animations = false -- disable cursor animation on this machine
 -- vim.g.sungp_low_spec = false -- use the full profile on a faster machine
 -- TODO:
+
+-- Raise only if your typical source files remain responsive.
+-- vim.g.sungp_bigfile_lines = 10000
+-- vim.g.sungp_bigfile_line_length = 2000

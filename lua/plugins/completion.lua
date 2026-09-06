@@ -46,6 +46,9 @@ return {
             "rafamadriz/friendly-snippets",
         },
         opts = {
+            enabled = function()
+                return vim.bo.buftype == "" and not vim.b.bigfile and vim.b.completion ~= false
+            end,
             keymap = {
                 preset = "none",
                 ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
@@ -56,13 +59,13 @@ return {
                 ["<Down>"] = { "select_next", "fallback" },
                 ["<Up>"] = { "select_prev", "fallback" },
                 ["<Tab>"] = {
-                    accept_copilot,
                     function(cmp)
                         if cmp.is_visible() then
                             return cmp.select_and_accept()
                         end
                     end,
                     "snippet_forward",
+                    accept_copilot,
                     "fallback",
                 },
                 ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
@@ -77,12 +80,13 @@ return {
                 nerd_font_variant = "mono",
             },
             completion = {
+                accept = { resolve_timeout_ms = 1000 },
                 trigger = {
                     prefetch_on_insert = true,
                 },
                 documentation = {
                     auto_show = true,
-                    auto_show_delay_ms = 50,
+                    auto_show_delay_ms = 200,
                     window = {
                         border = "rounded",
                         winblend = 0,
@@ -102,7 +106,12 @@ return {
                     draw = {
                         padding = { 1, 1 },
                         gap = 1,
-                        treesitter = { "lsp" },
+                        treesitter = {},
+                        columns = {
+                            { "kind_icon" },
+                            { "label", "label_description", gap = 1 },
+                            { "source_name" },
+                        },
                     },
                 },
             },
@@ -115,6 +124,16 @@ return {
             },
             sources = {
                 default = { "lsp", "path", "snippets", "buffer" },
+                providers = {
+                    buffer = {
+                        opts = {
+                            get_bufnrs = function()
+                                return vim.bo.buftype == "" and not vim.b.bigfile and { vim.api.nvim_get_current_buf() }
+                                    or {}
+                            end,
+                        },
+                    },
+                },
             },
             snippets = {
                 preset = "default",
@@ -124,7 +143,9 @@ return {
                 keymap = {
                     preset = "cmdline",
                 },
-                sources = { "buffer", "cmdline" },
+                sources = function()
+                    return vim.fn.getcmdtype() == ":" and { "cmdline" } or {}
+                end,
                 completion = {
                     menu = {
                         auto_show = function()

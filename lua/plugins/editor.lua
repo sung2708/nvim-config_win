@@ -259,7 +259,10 @@ return {
     {
         "sphamba/smear-cursor.nvim",
         lazy = true,
-        init = not vim.g.sungp_low_spec and defer_after_vimenter("smear-cursor.nvim", 800) or nil,
+        init = not vim.g.sungp_low_spec and vim.g.sungp_animations ~= false and defer_after_vimenter(
+            "smear-cursor.nvim",
+            800
+        ) or nil,
         keys = {
             {
                 "<leader>ua",
@@ -419,6 +422,7 @@ return {
             require("mini.bracketed").setup({
                 comment = { suffix = "" },
                 diagnostic = { suffix = "" },
+                quickfix = { suffix = "" },
                 treesitter = { suffix = "" },
                 undo = { suffix = "" },
                 yank = { suffix = "" },

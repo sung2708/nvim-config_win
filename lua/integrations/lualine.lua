@@ -45,6 +45,7 @@ require("lualine").setup({
         section_separators = { left = "", right = "" },
     },
     sections = {
+        lualine_b = { "branch", "diff" },
         lualine_c = {
             { "filename", path = 0 },
             {

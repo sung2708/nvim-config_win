@@ -1,5 +1,46 @@
 local core_group = vim.api.nvim_create_augroup("SungpCore", { clear = true })
 
+-- Registered before plugin/filetype detection: catch dense or many-line files
+-- that fall below the disk-size cutoff without reading the file a second time.
+vim.api.nvim_create_autocmd("BufReadPost", {
+    group = core_group,
+    callback = function(args)
+        local buf = args.buf
+        local count = vim.api.nvim_buf_line_count(buf)
+        local large = vim.b[buf].bigfile or count > (vim.g.sungp_bigfile_lines or 10000)
+        if not large then
+            for first = 0, count - 1, 256 do
+                for _, line in ipairs(vim.api.nvim_buf_get_lines(buf, first, math.min(first + 256, count), false)) do
+                    if #line > (vim.g.sungp_bigfile_line_length or 2000) then
+                        large = true
+                        break
+                    end
+                end
+                if large then
+                    break
+                end
+            end
+        end
+        if not large then
+            return
+        end
+        vim.b[buf].bigfile = true
+        vim.b[buf].completion = false
+        vim.b[buf].minianimate_disable = true
+        vim.b[buf].minihipatterns_disable = true
+        vim.bo[buf].filetype = "bigfile"
+        vim.bo[buf].syntax = "OFF"
+        vim.diagnostic.enable(false, { bufnr = buf })
+        vim.api.nvim_buf_call(buf, function()
+            vim.opt_local.foldmethod = "manual"
+            vim.opt_local.cursorcolumn = false
+            vim.opt_local.cursorline = false
+            vim.opt_local.relativenumber = false
+            vim.opt_local.statuscolumn = ""
+        end)
+    end,
+})
+
 -- Neovim's built-in ftplugins for these filetypes start Treesitter
 -- synchronously inside FileType, which delays the first rendered frame. Defer
 -- only those built-in calls, including files selected from an empty-start dashboard.

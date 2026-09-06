@@ -98,7 +98,12 @@ local function map_java(bufnr)
 end
 
 local function start(bufnr)
-    if vim.bo[bufnr].filetype ~= "java" then
+    if
+        not vim.api.nvim_buf_is_valid(bufnr)
+        or vim.b[bufnr].bigfile
+        or vim.bo[bufnr].buftype ~= ""
+        or vim.bo[bufnr].filetype ~= "java"
+    then
         return
     end
 
@@ -156,8 +161,8 @@ local function start(bufnr)
         init_options = {
             bundles = java_bundles(),
         },
-        on_attach = function()
-            map_java(bufnr)
+        on_attach = function(_, attached_bufnr)
+            map_java(attached_bufnr)
             local jdtls = require("jdtls")
             pcall(jdtls.setup_dap, { hotcodereplace = "auto" })
             local ok_dap, jdtls_dap = pcall(require, "jdtls.dap")
@@ -179,8 +184,13 @@ function M.setup()
         end,
     })
 
+    local bufnr = vim.api.nvim_get_current_buf()
     vim.schedule(function()
-        start(vim.api.nvim_get_current_buf())
+        if vim.api.nvim_buf_is_valid(bufnr) then
+            vim.api.nvim_buf_call(bufnr, function()
+                start(bufnr)
+            end)
+        end
     end)
 end
 

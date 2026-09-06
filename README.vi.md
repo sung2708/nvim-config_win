@@ -479,15 +479,16 @@ Trên Windows x86_64, cấu hình đặt `GOARCH=amd64` nếu biến này chưa 
 
 | Vai trò      | Công cụ               |
 | ------------ | --------------------- |
-| LSP          | typescript-tools.nvim |
+| LSP          | ts_ls (typescript-language-server) |
 | Diagnostics  | ESLint                |
-| Format       | eslint_d và Prettier  |
+| Format       | Prettier              |
 | Debug        | js-debug-adapter      |
 | Test         | neotest-jest          |
 | JSX/TSX tags | nvim-ts-autotag       |
 
-`typescript-tools.nvim` sở hữu tích hợp TypeScript language server, nên
-`ts_ls` không được bật lần thứ hai.
+`ts_ls` là server TypeScript đang dùng; cấu hình `typescript-tools.nvim` được tắt.
+Khi LSP đã gắn vào buffer: `Space+Ti` sắp xếp import, `Space+Ta` thêm import thiếu,
+`Space+Tu` bỏ code không dùng, `Space+Tf` sửa lỗi mà server hỗ trợ.
 
 ### Java
 
@@ -1113,3 +1114,22 @@ của `sphamba/smear-cursor.nvim` trong `lua/plugins/editor.lua`.
 - [IncRename](https://github.com/smjonas/inc-rename.nvim)
 - [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls)
 - [neotest-java](https://github.com/rcasia/neotest-java)
+
+
+### Hiệu năng và auto-import
+
+- LSP tải theo loại mã nguồn; file văn bản thường không tải bộ LSP.
+- Plugin UI tải trễ đợi Normal mode và khoảng nghỉ gõ 300 ms. Completion vẫn tải khi cần trong Insert mode.
+- Tìm root không vượt lên thư mục home của người dùng để tránh nhận nhầm `package.json` dùng chung là dự án.
+- File trên 10.000 dòng hoặc dòng dài trên 2.000 ký tự dùng chế độ `bigfile`. Có thể chỉnh `vim.g.sungp_bigfile_lines` và `vim.g.sungp_bigfile_line_length` trong `lua/config/local.lua`; cơ chế giới hạn dung lượng vẫn hoạt động riêng.
+- Chọn gợi ý LSP bằng Tab/Ctrl-y để thêm import; server cần hoàn tất lập chỉ mục và thư viện phải có trong môi trường dự án. Với tên đã gõ, dùng `<leader>ca` để chọn code action mà server cung cấp.
+- Kiểm tra tích hợp: `nvim --headless -u NONE -i NONE -l tests/startup.lua`; auto-import TypeScript thật: cùng lệnh với `tests/autoimport.lua` (cần server đã cài).
+
+
+### Rà soát toàn bộ cấu hình
+
+Xem [CONFIG_AUDIT.md](CONFIG_AUDIT.md) để biết danh mục plugin, các lỗi đã sửa và phạm vi kiểm tra.
+`Tab` ưu tiên menu completion, rồi snippet, rồi gợi ý AI; `Ctrl-y` luôn dùng để chấp nhận completion.
+Go dùng gopls cho auto-import completion và goimports khi lưu, không sửa import bằng timer InsertLeave.
+`:LspRestart` giữ nội dung chưa lưu và khởi động lại các buffer vốn gắn vào client.
+`:ConfigHealth` báo project root, trạng thái format, LSP và số plugin đã tải.

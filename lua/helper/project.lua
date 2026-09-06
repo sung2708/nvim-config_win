@@ -25,22 +25,57 @@ function M.directory(bufnr)
 end
 
 function M.root(bufnr)
+    bufnr = bufnr or 0
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+        return vim.fn.getcwd()
+    end
+    if
+        vim.bo[bufnr].buftype ~= ""
+        or vim.api.nvim_buf_get_name(bufnr) == ""
+        or vim.api.nvim_buf_get_name(bufnr):match("^%a[%w+.-]*://")
+    then
+        return vim.fn.getcwd()
+    end
     local directory = M.directory(bufnr)
-    return vim.fs.root(directory, ".git")
-        or vim.fs.root(directory, {
-            "package.json",
-            "pyproject.toml",
-            "go.work",
-            "go.mod",
-            "Cargo.toml",
-            "pom.xml",
-            "build.gradle",
-            "build.gradle.kts",
-            "CMakeLists.txt",
-            "Makefile",
-            ".project-root",
-        })
-        or vim.fn.getcwd()
+    local home = vim.fs.normalize(vim.uv.os_homedir())
+    local start = directory
+    local language_root
+    local markers = {
+        "package.json",
+        "pyproject.toml",
+        "go.work",
+        "go.mod",
+        "Cargo.toml",
+        "pom.xml",
+        "build.gradle",
+        "build.gradle.kts",
+        "CMakeLists.txt",
+        "Makefile",
+        ".project-root",
+    }
+    while directory do
+        -- A package.json in the home folder must not absorb unrelated projects.
+        if directory:lower() == home:lower() and directory ~= start then
+            break
+        end
+        if vim.uv.fs_stat(vim.fs.joinpath(directory, ".git")) then
+            return directory
+        end
+        if not language_root then
+            for _, marker in ipairs(markers) do
+                if vim.uv.fs_stat(vim.fs.joinpath(directory, marker)) then
+                    language_root = directory
+                    break
+                end
+            end
+        end
+        local parent = vim.fs.dirname(directory)
+        if parent == directory then
+            break
+        end
+        directory = parent
+    end
+    return language_root or vim.fn.getcwd()
 end
 
 return M

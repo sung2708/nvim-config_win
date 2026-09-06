@@ -93,6 +93,9 @@ if ok_new then
                             vim.api.nvim_buf_is_loaded(bufnr)
                             and vim.bo[bufnr].filetype ~= ""
                             and vim.bo[bufnr].filetype ~= "bigfile"
+                            and vim.bo[bufnr].buftype == ""
+                            and not vim.b[bufnr].bigfile
+                            and vim.fn.bufwinid(bufnr) ~= -1
                         then
                             pcall(vim.treesitter.start, bufnr)
                         end
@@ -133,6 +136,17 @@ if ok_new then
     end
 
     local treesitter_group = vim.api.nvim_create_augroup("TreesitterStart", { clear = true })
+    vim.api.nvim_create_autocmd("BufWipeout", {
+        group = treesitter_group,
+        callback = function(args)
+            local timer = pending[args.buf]
+            pending[args.buf] = nil
+            if timer and not timer:is_closing() then
+                timer:stop()
+                timer:close()
+            end
+        end,
+    })
     vim.api.nvim_create_autocmd("FileType", {
         group = treesitter_group,
         callback = function(args)

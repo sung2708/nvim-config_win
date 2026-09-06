@@ -16,6 +16,17 @@ return {
     {
         "ibhagwan/fzf-lua",
         cmd = "FzfLua",
+        init = function()
+            -- Warm the picker only on the dashboard, during idle time.
+            vim.api.nvim_create_autocmd("FileType", {
+                group = vim.api.nvim_create_augroup("SungpDashboardPickerWarmup", { clear = true }),
+                pattern = "snacks_dashboard",
+                once = true,
+                callback = function()
+                    require("helper.utils").defer_plugin_after_vimenter("fzf-lua", 100)()
+                end,
+            })
+        end,
         keys = {
             {
                 "<leader>ff",
@@ -37,7 +48,7 @@ return {
             {
                 "<leader>fg",
                 function()
-                    -- Keep file icons; avoid a Git status scan on every query.
+                    -- Keep file icons without running a Git status scan per query.
                     require("fzf-lua").live_grep({
                         cwd = require("helper.project").root(),
                         file_icons = true,
@@ -77,8 +88,17 @@ return {
             { "<leader>fE", find("live_grep", "buffer"), desc = "Find: Grep From Buffer Directory" },
             { "<leader>fN", find("live_grep_native", "project"), desc = "Find: Fast Project Grep (No Icons)" },
             { "<leader>fR", find("resume"), desc = "Find: Resume Last Picker" },
-            { "<leader>fw", find("grep_cword", "project"), desc = "Find: Word in Project" },
-            { "<leader>fw", find("grep_visual", "project"), mode = "x", desc = "Find: Selection in Project" },
+            {
+                "<leader>fw",
+                find("grep_cword", "project", { file_icons = true, git_icons = false }),
+                desc = "Find: Word in Project",
+            },
+            {
+                "<leader>fw",
+                find("grep_visual", "project", { file_icons = true, git_icons = false }),
+                mode = "x",
+                desc = "Find: Selection in Project",
+            },
             { "<leader>fl", find("blines"), desc = "Find: Lines in Buffer" },
             { "<leader>fO", find("oldfiles"), desc = "Find: Recent Files" },
             { "<leader>fk", find("keymaps"), desc = "Find: Keymaps" },

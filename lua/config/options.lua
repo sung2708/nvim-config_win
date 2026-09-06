@@ -115,7 +115,7 @@ end
 opt.number = true
 opt.relativenumber = true
 opt.cursorline = true
-opt.cursorcolumn = true
+opt.cursorcolumn = false
 opt.termguicolors = true
 opt.winborder = "rounded"
 opt.signcolumn = "yes"

@@ -504,15 +504,15 @@ does not already exist.
 
 | Role         | Tool                  |
 | ------------ | --------------------- |
-| LSP          | typescript-tools.nvim |
+| LSP          | ts_ls (typescript-language-server) |
 | Diagnostics  | ESLint                |
-| Formatting   | eslint_d and Prettier |
+| Formatting   | Prettier              |
 | Debugging    | js-debug-adapter      |
 | Testing      | neotest-jest          |
 | JSX/TSX tags | nvim-ts-autotag       |
 
-`typescript-tools.nvim` owns the TypeScript language server integration, so
-`ts_ls` is not enabled a second time.
+`ts_ls` owns TypeScript LSP; the optional `typescript-tools.nvim` spec is disabled.
+Import and fix mappings are registered when ts_ls attaches.
 
 ### Java
 
@@ -1136,7 +1136,6 @@ Recognized tags: `TODO:`, `FIX:`, `FIXME:`, `HACK:`, `WARN:`, `PERF:`, and
 | `Space+Ta` | Add missing imports            |
 | `Space+Tu` | Remove unused code and imports |
 | `Space+Tf` | Apply all available fixes      |
-| `Space+Tr` | Rename file and update imports |
 
 ### Java Keymaps
 
@@ -1615,3 +1614,6 @@ To change its color or disable Insert-mode animation, edit the
 - [Smear Cursor](https://github.com/sphamba/smear-cursor.nvim)
 - [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls)
 - [neotest-java](https://github.com/rcasia/neotest-java)
+
+
+See [CONFIG_AUDIT.md](CONFIG_AUDIT.md) for the full configuration audit, fixes, and verification limits.

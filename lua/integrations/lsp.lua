@@ -2,6 +2,30 @@ local capabilities = require("blink.cmp").get_lsp_capabilities()
 
 vim.lsp.config("*", {
     capabilities = capabilities,
+    flags = { debounce_text_changes = 150 },
+})
+
+local ts_root_dir = vim.lsp.config.ts_ls.root_dir
+vim.lsp.config("ts_ls", {
+    init_options = {
+        preferences = {
+            includeCompletionsForModuleExports = true,
+            includeCompletionsWithInsertText = true,
+            includeCompletionsForImportStatements = true,
+        },
+    },
+    settings = {
+        implicitProjectConfiguration = {
+            checkJs = false,
+        },
+    },
+    root_dir = function(bufnr, on_dir)
+        -- Keep lspconfig's Deno detection, then prefer the nearest JS/TS project.
+        ts_root_dir(bufnr, function(root)
+            local project = vim.fs.root(bufnr, { "tsconfig.json", "jsconfig.json", "package.json", ".git" })
+            on_dir(project and #project > #root and project or root)
+        end)
+    end,
 })
 
 vim.lsp.config("lua_ls", {
@@ -78,7 +102,7 @@ local function clangd_cmd()
         "clangd",
         "--log=error",
         "--completion-style=detailed",
-        "--header-insertion=never",
+        "--header-insertion=iwyu",
     }
 
     if not vim.g.sungp_low_spec then
@@ -191,7 +215,7 @@ vim.lsp.config("gopls", {
                 unusedparams = true,
                 unusedwrite = true,
             },
-            completeUnimported = not vim.g.sungp_low_spec,
+            completeUnimported = true,
             gofumpt = true,
             staticcheck = not vim.g.sungp_low_spec,
             usePlaceholders = true,
@@ -261,6 +285,19 @@ vim.api.nvim_create_autocmd("LspAttach", {
                 silent = true,
                 desc = "LSP: " .. desc,
             })
+        end
+
+        if client.name == "ts_ls" then
+            for lhs, action in pairs({
+                ["<leader>Ti"] = { "source.organizeImports.ts", "Organize Imports" },
+                ["<leader>Ta"] = { "source.addMissingImports.ts", "Add Missing Imports" },
+                ["<leader>Tu"] = { "source.removeUnused.ts", "Remove Unused" },
+                ["<leader>Tf"] = { "source.fixAll.ts", "Fix All" },
+            }) do
+                map("n", lhs, function()
+                    require("helper.lsp").typescript_action(action[1])
+                end, action[2])
+            end
         end
 
         map("n", "gd", fzf("lsp_definitions", vim.lsp.buf.definition), "Definitions")
@@ -379,16 +416,7 @@ end, {
 })
 
 vim.api.nvim_create_user_command("LspRestart", function(opts)
-    local filter = opts.args ~= "" and { name = opts.args } or { bufnr = 0 }
-    local clients = vim.lsp.get_clients(filter)
-
-    for _, client in ipairs(clients) do
-        client:stop(true)
-    end
-
-    vim.defer_fn(function()
-        vim.cmd("edit")
-    end, 100)
+    require("helper.lsp").restart(opts.args)
 end, {
     nargs = "?",
     complete = function()
@@ -410,6 +438,7 @@ local servers = {
     "lua_ls",
     "pyright",
     "ruff",
+    "ts_ls",
     "vimls",
 }
 

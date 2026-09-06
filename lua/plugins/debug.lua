@@ -11,8 +11,6 @@ return {
             { "<leader>dr", desc = "Debug: Open REPL" },
             { "<leader>dl", desc = "Debug: Run Last" },
             { "<leader>du", desc = "Debug: Toggle UI" },
-            { "<leader>nd", desc = "Test: Debug Nearest" },
-            { "<leader>nD", desc = "Test: Debug File" },
         },
         dependencies = {
             "nvim-neotest/nvim-nio",
@@ -30,6 +28,8 @@ return {
         "nvim-neotest/neotest",
         cmd = "NeotestSummary",
         keys = {
+            { "<leader>nd", desc = "Test: Debug Nearest" },
+            { "<leader>nD", desc = "Test: Debug File" },
             { "<leader>nt", desc = "Test: Nearest" },
             { "<leader>nf", desc = "Test: File" },
             { "<leader>nT", desc = "Test: Project" },

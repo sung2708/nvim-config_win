@@ -19,6 +19,7 @@ end
 require("config.options")
 
 vim.api.nvim_create_user_command("ConfigHealth", function()
+    vim.g.sungp_health_buffer = vim.api.nvim_get_current_buf()
     vim.cmd.checkhealth("config")
 end, { desc = "Check this configuration and its external tools" })
 

@@ -141,7 +141,10 @@ local function submit_when_ready(chat)
 
         attempts = attempts + 1
         if attempts >= max_attempts then
-            vim.notify("Codex ACP chưa sẵn sàng để gửi câu hỏi. Kiểm tra :messages, rồi nhấn <CR> trong chat.", vim.log.levels.ERROR)
+            vim.notify(
+                "Codex ACP chưa sẵn sàng để gửi câu hỏi. Kiểm tra :messages, rồi nhấn <CR> trong chat.",
+                vim.log.levels.ERROR
+            )
             return
         end
 
@@ -244,7 +247,12 @@ local function selection_diagnostics(context)
 end
 
 local function staged_diff()
-    local result = vim.system({ "git", "diff", "--no-ext-diff", "--staged" }, { text = true }):wait()
+    -- Prompt content is resolved synchronously by CodeCompanion. Bound the
+    -- subprocess and use the project being edited, rather than unrelated CWD.
+    local result = vim.system({ "git", "diff", "--no-ext-diff", "--staged" }, {
+        text = true,
+        cwd = require("helper.project").root(),
+    }):wait(1500)
     local diff = result.stdout or ""
 
     if result.code ~= 0 then

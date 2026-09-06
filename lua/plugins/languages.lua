@@ -21,6 +21,9 @@ return {
             local bufnr = vim.api.nvim_get_current_buf()
             if vim.bo[bufnr].filetype == "python" then
                 vim.schedule(function()
+                    if not vim.api.nvim_buf_is_valid(bufnr) or vim.bo[bufnr].filetype ~= "python" then
+                        return
+                    end
                     for _, group in ipairs({ "VenvSelectorCachedVenv", "VenvSelectorUvDetect" }) do
                         pcall(vim.api.nvim_exec_autocmds, "FileType", {
                             group = group,
@@ -65,6 +68,7 @@ return {
     },
     {
         "pmizio/typescript-tools.nvim",
+        enabled = false,
         ft = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
         keys = {
             { "<leader>Ti", "<cmd>TSToolsOrganizeImports<cr>", desc = "TypeScript: Organize Imports" },

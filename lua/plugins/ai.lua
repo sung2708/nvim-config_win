@@ -38,8 +38,13 @@ local function with_ready_acp_session(chat, callback)
 
     local attempts = 0
     local max_attempts = 400
+    chat._sungp_options_request = (chat._sungp_options_request or 0) + 1
+    local request = chat._sungp_options_request
 
     local function wait_for_session()
+        if request ~= chat._sungp_options_request then
+            return
+        end
         if not vim.api.nvim_buf_is_valid(chat.bufnr) then
             return
         end
@@ -408,9 +413,14 @@ return {
     {
         "github/copilot.vim",
         cmd = "Copilot",
-        event = "InsertEnter",
+        event = { "BufReadPost", "BufNewFile" },
         init = function()
             vim.g.copilot_no_tab_map = true
+            vim.g.copilot_hide_during_completion = false
+        end,
+        config = function()
+            vim.fn["copilot#Init"]()
+            vim.fn["copilot#OnFileType"]()
         end,
     },
 }

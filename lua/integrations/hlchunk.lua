@@ -12,6 +12,10 @@ if hlchunk then
 
     local exclude_ft = {
         bigfile = true,
+        codecompanion = true,
+        terminal = true,
+        toggleterm = true,
+        fzf = true,
         ["neo-tree"] = true,
     }
 

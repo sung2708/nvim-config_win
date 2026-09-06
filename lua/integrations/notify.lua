@@ -4,7 +4,7 @@ if notify then
     notify.setup({
         timeout = 2000,
         render = "wrapped-default",
-        stages = "slide",
+        stages = vim.g.sungp_animations == false and "static" or "slide",
     })
     vim.notify = notify
 end

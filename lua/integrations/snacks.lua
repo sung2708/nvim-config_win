@@ -29,82 +29,90 @@ if snacks then
         local fzf_path = require("fzf-lua.path")
         local fzf_utils = require("fzf-lua.utils")
 
-        opts = vim.tbl_deep_extend("force", opts or {}, {
-            actions = {
-                ["enter"] = {
-                    -- Keep the picker visible while the selected buffer is
-                    -- loaded underneath it, then close it. This avoids a
-                    -- one-frame redraw of the dashboard on confirmation.
-                    fn = function(selected, picker_opts)
-                        local fzf_win = fzf_utils.fzf_winobj()
-                        local source_win = fzf_win and fzf_win.src_winid
-                        local ok, err
+        opts = vim.tbl_deep_extend(
+            "force",
+            {
+                file_icons = true,
+                git_icons = false,
+            },
+            opts or {},
+            {
+                actions = {
+                    ["enter"] = {
+                        -- Keep the picker visible while the selected buffer is
+                        -- loaded underneath it, then close it. This avoids a
+                        -- one-frame redraw of the dashboard on confirmation.
+                        fn = function(selected, picker_opts)
+                            local fzf_win = fzf_utils.fzf_winobj()
+                            local source_win = fzf_win and fzf_win.src_winid
+                            local ok, err
 
-                        vim.cmd.stopinsert()
-                        if #selected == 1 and source_win and vim.api.nvim_win_is_valid(source_win) then
-                            local entry = fzf_path.entry_to_file(selected[1], picker_opts, picker_opts._uri)
-                            local bufnr = entry.bufnr
+                            vim.cmd.stopinsert()
+                            if #selected == 1 and source_win and vim.api.nvim_win_is_valid(source_win) then
+                                local entry = fzf_path.entry_to_file(selected[1], picker_opts, picker_opts._uri)
+                                local bufnr = entry.bufnr
 
-                            if not (bufnr and vim.api.nvim_buf_is_valid(bufnr)) then
-                                local path = entry.bufname or entry.path
-                                if path and not fzf_path.is_absolute(path) then
-                                    path = fzf_path.join({
-                                        picker_opts.cwd or picker_opts._cwd or fzf_utils.cwd(),
-                                        path,
-                                    })
+                                if not (bufnr and vim.api.nvim_buf_is_valid(bufnr)) then
+                                    local path = entry.bufname or entry.path
+                                    if path and not fzf_path.is_absolute(path) then
+                                        path = fzf_path.join({
+                                            picker_opts.cwd or picker_opts._cwd or fzf_utils.cwd(),
+                                            path,
+                                        })
+                                    end
+                                    bufnr = path and vim.fn.bufadd(fzf_path.normalize(path)) or nil
                                 end
-                                bufnr = path and vim.fn.bufadd(fzf_path.normalize(path)) or nil
-                            end
 
-                            ok, err = pcall(function()
-                                assert(bufnr and bufnr ~= 0, "Unable to resolve selected file")
-                                vim.bo[bufnr].buflisted = true
-                                vim.api.nvim_set_current_win(source_win)
-                                -- :buffer runs the swap recovery dialog; the buffer API does not.
-                                local opened, open_err = pcall(vim.cmd.buffer, bufnr)
-                                if not opened then
-                                    if open_err == "Keyboard interrupt" then
+                                ok, err = pcall(function()
+                                    assert(bufnr and bufnr ~= 0, "Unable to resolve selected file")
+                                    vim.bo[bufnr].buflisted = true
+                                    vim.api.nvim_set_current_win(source_win)
+                                    -- :buffer runs the swap recovery dialog; the buffer API does not.
+                                    local opened, open_err = pcall(vim.cmd.buffer, bufnr)
+                                    if not opened then
+                                        if open_err == "Keyboard interrupt" then
+                                            return
+                                        end
+                                        -- E325 is reported even after a successful recovery choice.
+                                        if not tostring(open_err):match("^Vim:E325:") then
+                                            error(open_err)
+                                        end
+                                    end
+                                    if vim.api.nvim_win_get_buf(source_win) ~= bufnr then
                                         return
                                     end
-                                    -- E325 is reported even after a successful recovery choice.
-                                    if not tostring(open_err):match("^Vim:E325:") then
-                                        error(open_err)
-                                    end
-                                end
-                                if vim.api.nvim_win_get_buf(source_win) ~= bufnr then
-                                    return
-                                end
 
-                                if entry.line and entry.line > 0 then
-                                    vim.api.nvim_win_set_cursor(source_win, {
-                                        entry.line,
-                                        math.max(0, (entry.col or 1) - 1),
-                                    })
-                                    vim.cmd("normal! zvzz")
+                                    if entry.line and entry.line > 0 then
+                                        vim.api.nvim_win_set_cursor(source_win, {
+                                            entry.line,
+                                            math.max(0, (entry.col or 1) - 1),
+                                        })
+                                        vim.cmd("normal! zvzz")
+                                    end
+                                end)
+                            else
+                                if fzf_win then
+                                    fzf_win:close()
+                                    fzf_win = nil
                                 end
-                            end)
-                        else
+                                ok, err = pcall(fzf_actions.file_edit_or_qf, selected, picker_opts)
+                            end
+
                             if fzf_win then
                                 fzf_win:close()
-                                fzf_win = nil
                             end
-                            ok, err = pcall(fzf_actions.file_edit_or_qf, selected, picker_opts)
-                        end
-
-                        if fzf_win then
-                            fzf_win:close()
-                        end
-                        if fzf_utils.fzf_winobj() == nil then
-                            fzf_utils.clear_CTX()
-                        end
-                        if not ok then
-                            error(err)
-                        end
-                    end,
-                    noclose = true,
+                            if fzf_utils.fzf_winobj() == nil then
+                                fzf_utils.clear_CTX()
+                            end
+                            if not ok then
+                                error(err)
+                            end
+                        end,
+                        noclose = true,
+                    },
                 },
-            },
-        })
+            }
+        )
 
         return fzf[cmd](opts)
     end

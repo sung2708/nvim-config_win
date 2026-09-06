@@ -80,6 +80,41 @@ function M.check()
         check_tool("Clipboard", { "wl-copy", "xclip", "xsel" }, false, "system clipboard")
     end
 
+    vim.health.start("Current buffer and plugin state")
+    local source = vim.g.sungp_health_buffer
+    if not source or not vim.api.nvim_buf_is_valid(source) then
+        source = vim.api.nvim_get_current_buf()
+    end
+    vim.health.info("Search root: " .. require("helper.project").root(source))
+    vim.health.info(
+        "Buffer filetype: " .. vim.bo[source].filetype .. "; bigfile: " .. tostring(vim.b[source].bigfile == true)
+    )
+    vim.health.info("Format on save: " .. (require("helper.format").on_save(source) and "enabled" or "skipped"))
+    check_tool("fd", { "fd", "fdfind" }, false, "fast file picker; rg is the fallback")
+    local clients = vim.lsp.get_clients({ bufnr = source })
+    local seen = {}
+    for _, client in ipairs(clients) do
+        if seen[client.name] then
+            vim.health.warn("Multiple " .. client.name .. " clients on this buffer; inspect :LspInfo")
+        end
+        seen[client.name] = true
+        vim.health.info("LSP: " .. client.name .. " (" .. tostring(client.config.root_dir) .. ")")
+    end
+    if #clients == 0 then
+        vim.health.info("No LSP attached to this buffer")
+    end
+    local lazy = package.loaded["lazy.core.config"]
+    if lazy then
+        local total, loaded = 0, 0
+        for _, plugin in pairs(lazy.plugins) do
+            total = total + 1
+            if plugin._.loaded then
+                loaded = loaded + 1
+            end
+        end
+        vim.health.info(("Plugins loaded: %d/%d; use <leader>up for load times"):format(loaded, total))
+    end
+
     local local_config = vim.fs.joinpath(vim.fn.stdpath("config"), "lua", "config", "local.lua")
     if vim.uv.fs_stat(local_config) then
         if vim.g.config_local_loaded then

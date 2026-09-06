@@ -1,4 +1,8 @@
 local M = {}
+local last_key = 0
+vim.on_key(function()
+    last_key = vim.uv.hrtime()
+end, vim.api.nvim_create_namespace("SungpIdlePlugins"))
 
 M.safe_require = function(mod)
     local ok, m = pcall(require, mod)
@@ -33,9 +37,23 @@ end
 M.defer_plugin_after_vimenter = function(plugin, delay)
     return function()
         local function schedule_load()
-            vim.defer_fn(function()
+            local function try_load()
+                if plugin_loaded(plugin) then
+                    return
+                end
+                -- Completion is needed during Insert; optional UI can wait for
+                -- a pause instead of interrupting typing or terminal input.
+                if
+                    plugin ~= "blink.cmp"
+                    and (vim.api.nvim_get_mode().mode ~= "n" or (vim.uv.hrtime() - last_key) / 1e6 < 300)
+                then
+                    vim.defer_fn(try_load, 300)
+                    return
+                end
                 load_plugin(plugin)
-            end, delay or 100)
+                last_key = vim.uv.hrtime()
+            end
+            vim.defer_fn(try_load, delay or 100)
         end
 
         if vim.v.vim_did_enter == 1 then
@@ -109,10 +127,13 @@ M.defer_plugin_on_filetype = function(plugin, filetypes, delay)
                         not vim.api.nvim_buf_is_valid(bufnr)
                         or not vim.api.nvim_buf_is_loaded(bufnr)
                         or vim.bo[bufnr].filetype ~= filetype
+                        or vim.b[bufnr].bigfile
                     then
                         return
                     end
-                    load_plugin(plugin)
+                    vim.api.nvim_buf_call(bufnr, function()
+                        load_plugin(plugin)
+                    end)
 
                     if plugin_loaded(plugin) then
                         finish()

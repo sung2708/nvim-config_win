@@ -38,5 +38,5 @@ map("n", "<C-Left>", "<cmd>vertical resize -2<cr>", { desc = "Decrease Window Wi
 map("n", "<C-Right>", "<cmd>vertical resize +2<cr>", { desc = "Increase Window Width" })
 
 map("n", "<leader>bc", function()
-    Snacks.bufdelete()
+    require("snacks").bufdelete()
 end, { silent = true, desc = "Close Buffer" })

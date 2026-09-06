@@ -16,16 +16,7 @@ if vim.fn.has("win32") == 1 then
         shell_executable = "powershell"
     end
 
-    -- Keep the PowerShell command wrapper valid for jobstart()/ToggleTerm,
-    -- but do not modify Console input/output encoding: that can make ConPTY
-    -- echo typed characters twice in Windows terminals.
-    vim.opt.shell = shell_executable
-    vim.opt.shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command"
-    vim.opt.shellredir = "> %s 2>&1; exit $LastExitCode"
-    vim.opt.shellpipe = "> %s 2>&1; exit $LastExitCode"
-    vim.opt.shellquote = ""
-    vim.opt.shellxquote = ""
-    vim.opt.shelltemp = false
+    shell_executable = shell_executable .. " -NoLogo -NoProfile"
 end
 
 -- Force termguicolors for better highlight support
@@ -39,7 +30,7 @@ toggleterm.setup({
         if term.direction == "horizontal" then
             return 15
         elseif term.direction == "vertical" then
-            return vim.o.columns * 0.4
+            return math.floor(vim.o.columns * 0.4)
         end
     end,
     open_mapping = [[<C-\>]],
@@ -144,8 +135,14 @@ local function focus_editor_window()
         return
     end
 
-    for _, win in ipairs(vim.api.nvim_list_wins()) do
-        if vim.api.nvim_win_is_valid(win) and not is_sidebar(win) and not is_terminal(win) then
+    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+        if
+            vim.api.nvim_win_is_valid(win)
+            and vim.api.nvim_win_get_config(win).relative == ""
+            and vim.bo[vim.api.nvim_win_get_buf(win)].buftype == ""
+            and not is_sidebar(win)
+            and not is_terminal(win)
+        then
             vim.api.nvim_set_current_win(win)
             return
         end
@@ -190,6 +187,7 @@ function _G.set_terminal_keymaps()
 end
 
 vim.api.nvim_create_autocmd("TermOpen", {
+    group = vim.api.nvim_create_augroup("SungpTerminalKeymaps", { clear = true }),
     pattern = "term://*toggleterm#*",
     callback = function()
         set_terminal_keymaps()
