@@ -8,6 +8,25 @@ local function cmdline_position()
     return { vim.o.lines - height, 0 }
 end
 
+local function accept_copilot()
+    if vim.fn.exists("*copilot#GetDisplayedSuggestion") == 0 then
+        return false
+    end
+
+    local ok, suggestion = pcall(vim.fn["copilot#GetDisplayedSuggestion"])
+    if not ok or type(suggestion) ~= "table" or suggestion.text == nil or suggestion.text == "" then
+        return false
+    end
+
+    local keys = vim.fn["copilot#Accept"]("")
+    if keys == "" then
+        return false
+    end
+
+    vim.api.nvim_feedkeys(keys, "i", true)
+    return true
+end
+
 local defer_after_vimenter = require("helper.utils").defer_plugin_after_vimenter
 
 return {
@@ -37,6 +56,7 @@ return {
                 ["<Down>"] = { "select_next", "fallback" },
                 ["<Up>"] = { "select_prev", "fallback" },
                 ["<Tab>"] = {
+                    accept_copilot,
                     function(cmp)
                         if cmp.is_visible() then
                             return cmp.select_and_accept()

@@ -41,7 +41,7 @@ require("noice").setup({
     },
     messages = {
         enabled = true,
-        view = "notify",
+        view = "mini",
         view_search = "cmdline_popup",
     },
     popupmenu = {

@@ -65,12 +65,7 @@ return {
     },
     {
         "pmizio/typescript-tools.nvim",
-        lazy = true,
-        init = defer_on_filetype(
-            "typescript-tools.nvim",
-            { "javascript", "javascriptreact", "typescript", "typescriptreact" },
-            50
-        ),
+        ft = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
         keys = {
             { "<leader>Ti", "<cmd>TSToolsOrganizeImports<cr>", desc = "TypeScript: Organize Imports" },
             { "<leader>Ta", "<cmd>TSToolsAddMissingImports<cr>", desc = "TypeScript: Add Missing Imports" },

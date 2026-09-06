@@ -49,8 +49,7 @@ local mason_tools = {
 return {
     {
         "neovim/nvim-lspconfig",
-        lazy = true,
-        init = defer_on_filetype("nvim-lspconfig", lsp_filetypes, 60),
+        event = { "BufReadPre", "BufNewFile" },
         cmd = { "LspInfo", "LspRestart" },
         dependencies = {
             "saghen/blink.cmp",

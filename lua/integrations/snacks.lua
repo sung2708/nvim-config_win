@@ -141,7 +141,7 @@ if snacks then
         dashboard = {
             -- Avoid rendering a large dashboard on startup; it remains easy
             -- to re-enable locally when this profile is not needed.
-            enabled = false,
+            enabled = not vim.g.sungp_low_spec,
             width = 58,
             row = nil,
             col = nil,
